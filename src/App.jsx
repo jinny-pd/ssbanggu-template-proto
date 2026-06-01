@@ -48,6 +48,15 @@ function AppShell({ scale }) {
       justifyContent: 'center',
       overflow: 'hidden', background: bg,
     }}>
+      {scale !== 1 && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0,
+          height: 'env(safe-area-inset-top)',
+          background: bg,
+          zIndex: 9999,
+          pointerEvents: 'none',
+        }} />
+      )}
       <div style={{ transform: `scale(${scale})`, transformOrigin: scale !== 1 ? 'top center' : 'center center' }}>
         <Routes>
           <Route path="/" element={<Home />} />
