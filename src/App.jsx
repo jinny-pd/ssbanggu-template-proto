@@ -10,7 +10,7 @@ import OnboardingDone from './screens/OnboardingDone'
 import TemplateRoom from './screens/TemplateRoom'
 
 function useViewportScale() {
-  const calc = () => window.innerWidth <= 430 ? window.innerHeight / 812 : 1
+  const calc = () => window.innerWidth <= 430 ? window.screen.height / 812 : 1
   const [scale, setScale] = useState(calc)
   useEffect(() => {
     const update = () => setScale(calc())
@@ -24,7 +24,8 @@ export default function App() {
   const scale = useViewportScale()
   return (
     <div style={{
-      width: '100vw', height: '100dvh',
+      position: 'fixed', top: 0, left: 0,
+      width: '100%', height: '100%',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       overflow: 'hidden', background: '#111',
     }}>
