@@ -26,7 +26,9 @@ export default function App() {
     <div style={{
       position: 'fixed', top: 0, left: 0,
       width: '100%', height: '100%',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      display: 'flex',
+      alignItems: scale !== 1 ? 'flex-start' : 'center',
+      justifyContent: 'center',
       overflow: 'hidden', background: '#111',
     }}>
       <div style={{ transform: `scale(${scale})`, transformOrigin: scale !== 1 ? 'top center' : 'center center' }}>
