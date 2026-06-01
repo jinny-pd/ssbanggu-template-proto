@@ -12,7 +12,7 @@ import TemplateRoom from './screens/TemplateRoom'
 function useViewportScale() {
   const calc = () => {
     if (window.innerWidth > 430) return 1
-    return Math.max(window.innerWidth / 375, window.innerHeight / 812)
+    return Math.min(window.innerWidth / 375, window.innerHeight / 812)
   }
   const [scale, setScale] = useState(calc)
   useEffect(() => {
