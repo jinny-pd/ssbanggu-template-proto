@@ -9,7 +9,9 @@ export default function PhoneShell({ children, bg = '#222' }) {
       borderRadius: 0,
       flexShrink: 0,
     }}>
-      {children}
+      <div className="phone-inner">
+        {children}
+      </div>
     </div>
   )
 }
