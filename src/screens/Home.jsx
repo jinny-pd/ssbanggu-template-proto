@@ -402,7 +402,7 @@ const s = {
   },
   sheet: {
     position: 'absolute', left: '50%', transform: 'translateX(-50%)',
-    bottom: -442, height: 706, width: 375,
+    top: 548, height: 706, width: 375,
     background: 'white', borderTopLeftRadius: 16, borderTopRightRadius: 16,
     overflow: 'hidden', zIndex: 30, display: 'flex', flexDirection: 'column',
   },
