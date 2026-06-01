@@ -10,7 +10,7 @@ import OnboardingDone from './screens/OnboardingDone'
 import TemplateRoom from './screens/TemplateRoom'
 
 function useViewportScale() {
-  const calc = () => window.innerWidth <= 430 ? window.screen.height / 812 : 1
+  const calc = () => window.innerWidth <= 430 ? window.innerHeight / 812 : 1
   const [scale, setScale] = useState(calc)
   useEffect(() => {
     const update = () => setScale(calc())
@@ -27,6 +27,15 @@ const ROUTE_BG = {
 function AppShell({ scale }) {
   const location = useLocation()
   const bg = scale !== 1 ? (ROUTE_BG[location.pathname] ?? '#111111') : '#111111'
+
+  useEffect(() => {
+    if (scale === 1) return
+    const color = ROUTE_BG[location.pathname] ?? '#222222'
+    const themeTag = document.querySelector('meta[name="theme-color"]')
+    const statusTag = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+    if (themeTag) themeTag.setAttribute('content', color)
+    if (statusTag) statusTag.setAttribute('content', color === '#ffffff' ? 'default' : 'black-translucent')
+  }, [location.pathname, scale])
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0,
