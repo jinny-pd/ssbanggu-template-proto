@@ -296,7 +296,7 @@ export default function TemplateRoom() {
       <div style={s.page}>
 
         {/* ── Status Bar ── */}
-        <div className="status-bar" style={s.statusBar}>
+        <div style={s.statusBar}>
           <div style={{ position: 'relative', width: 54, height: 50, flexShrink: 0 }}>
             <div style={{ position: 'absolute', top: '32%', bottom: '26%', left: 0, right: 0, borderRadius: 32 }}>
               <img src={img941} alt="" style={{ position: 'absolute', left: 12.45, top: 5.17, width: 28.426, height: 11.089 }} />
@@ -309,7 +309,7 @@ export default function TemplateRoom() {
 
         {/* ── Top Bar ── */}
         {!defaultRoomVisible ? (
-          <div className="screen-topbar" style={s.topBar}>
+          <div style={s.topBar}>
             <div style={{ width: 24, flexShrink: 0 }} />
             <p style={s.topBarTitle}>영역 편집하기</p>
             <button style={s.closeBtn} onClick={() => { localStorage.setItem('ssOnboardingStep', 'template'); navigate('/') }}>
@@ -319,7 +319,7 @@ export default function TemplateRoom() {
             </button>
           </div>
         ) : (
-          <div className="screen-topbar" style={{ ...s.topBar, justifyContent: 'space-between' }}>
+          <div style={{ ...s.topBar, justifyContent: 'space-between' }}>
             <button style={s.closeBtn} onClick={() => navigate('/')}>
               <img src={iconBackButton} alt="뒤로" style={{ width: 24, height: 24 }} />
             </button>

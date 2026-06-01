@@ -27,7 +27,7 @@ export default function OnboardingDone() {
       <div style={s.page}>
 
         {/* ── Status Bar ── */}
-        <div className="status-bar" style={s.statusBar}>
+        <div style={s.statusBar}>
           <div style={s.sbTime}>
             <div style={s.sbTimeInner}>
               <img src={img941} alt="" style={s.sbTimeImg} />
@@ -39,7 +39,7 @@ export default function OnboardingDone() {
         </div>
 
         {/* ── Top Bar ── */}
-        <div className="screen-topbar" style={s.topBar}>
+        <div style={s.topBar}>
           <button style={s.closeBtn} onClick={handleReset}>
             <img src={iconBackButton} alt="뒤로" style={{ width: 24, height: 24 }} />
           </button>

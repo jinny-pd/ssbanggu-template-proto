@@ -57,7 +57,7 @@ export default function AddRoom() {
       <div style={s.page}>
 
         {/* ── Status Bar — h:48, pt:18 ── */}
-        <div className="status-bar" style={s.statusBar}>
+        <div style={s.statusBar}>
           <div style={s.sbLeft}>
             <span style={s.timeText}>9:41</span>
           </div>

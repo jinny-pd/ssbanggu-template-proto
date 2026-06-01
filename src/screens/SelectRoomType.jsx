@@ -57,7 +57,7 @@ export default function SelectRoomType() {
         <img src={imgGrid} alt="" style={s.grid} />
 
         {/* Status Bar */}
-        <div className="status-bar" style={s.statusBar}>
+        <div style={s.statusBar}>
           <div style={s.sbTime}>
             <img src={img941} alt="" style={{ width: 28.43, height: 11.09 }} />
           </div>
@@ -67,7 +67,7 @@ export default function SelectRoomType() {
         </div>
 
         {/* Top Bar */}
-        <div className="screen-topbar" style={s.topBar}>
+        <div style={s.topBar}>
           <div style={{ width: 24, flexShrink: 0 }} />
           <span style={s.topTitle}>방 만들기</span>
           <button style={s.closeBtn} onClick={() => navigate('/create-room')}>
