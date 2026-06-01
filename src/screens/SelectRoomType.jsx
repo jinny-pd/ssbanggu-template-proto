@@ -67,7 +67,7 @@ export default function SelectRoomType() {
         </div>
 
         {/* Top Bar */}
-        <div style={s.topBar}>
+        <div className="screen-topbar" style={s.topBar}>
           <div style={{ width: 24, flexShrink: 0 }} />
           <span style={s.topTitle}>방 만들기</span>
           <button style={s.closeBtn} onClick={() => navigate('/create-room')}>

@@ -39,7 +39,7 @@ export default function OnboardingDone() {
         </div>
 
         {/* ── Top Bar ── */}
-        <div style={s.topBar}>
+        <div className="screen-topbar" style={s.topBar}>
           <button style={s.closeBtn} onClick={handleReset}>
             <img src={iconBackButton} alt="뒤로" style={{ width: 24, height: 24 }} />
           </button>

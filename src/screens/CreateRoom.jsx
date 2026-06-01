@@ -1544,7 +1544,7 @@ export default function CreateRoom() {
 
         {/* Top Bar */}
         {animPhase === 'auto-arrange' ? (
-          <div style={s.topBar}>
+          <div className="screen-topbar" style={s.topBar}>
             <button style={s.closeBtn} onClick={() => navigate('/')}>
               <img src={iconBackButton} alt="뒤로" style={{ width: 24, height: 24 }} />
             </button>
@@ -1600,7 +1600,7 @@ export default function CreateRoom() {
             </div>
           </div>
         ) : (
-          <div style={s.topBar}>
+          <div className="screen-topbar" style={s.topBar}>
             <div style={{ width: 24, height: 24, flexShrink: 0 }} />
             <span style={s.topTitle}>{animPhase === 'area-select' ? '침실 영역 지정하기' : '방 만들기'}</span>
             <button style={s.closeBtn} onClick={() => navigate('/')}>

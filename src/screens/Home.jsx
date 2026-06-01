@@ -168,7 +168,7 @@ export default function Home() {
       </div>
 
       {/* ── Top Bar ── */}
-      <div style={s.topBar}>
+      <div className="screen-topbar" style={s.topBar}>
         <button style={s.backBtn} onClick={() => {
           localStorage.removeItem('ssOnboardingStep')
           setStep(null)

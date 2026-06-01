@@ -309,7 +309,7 @@ export default function TemplateRoom() {
 
         {/* ── Top Bar ── */}
         {!defaultRoomVisible ? (
-          <div style={s.topBar}>
+          <div className="screen-topbar" style={s.topBar}>
             <div style={{ width: 24, flexShrink: 0 }} />
             <p style={s.topBarTitle}>영역 편집하기</p>
             <button style={s.closeBtn} onClick={() => { localStorage.setItem('ssOnboardingStep', 'template'); navigate('/') }}>
@@ -319,7 +319,7 @@ export default function TemplateRoom() {
             </button>
           </div>
         ) : (
-          <div style={{ ...s.topBar, justifyContent: 'space-between' }}>
+          <div className="screen-topbar" style={{ ...s.topBar, justifyContent: 'space-between' }}>
             <button style={s.closeBtn} onClick={() => navigate('/')}>
               <img src={iconBackButton} alt="뒤로" style={{ width: 24, height: 24 }} />
             </button>
