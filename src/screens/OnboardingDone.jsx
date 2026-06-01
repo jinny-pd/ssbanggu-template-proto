@@ -27,7 +27,7 @@ export default function OnboardingDone() {
       <div style={s.page}>
 
         {/* ── Status Bar ── */}
-        <div style={s.statusBar}>
+        <div className="status-bar" style={s.statusBar}>
           <div style={s.sbTime}>
             <div style={s.sbTimeInner}>
               <img src={img941} alt="" style={s.sbTimeImg} />

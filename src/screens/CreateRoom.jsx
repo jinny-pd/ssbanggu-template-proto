@@ -1378,7 +1378,7 @@ export default function CreateRoom() {
       <div ref={screenRef} style={s.screen}>
 
         {/* ── Status Bar — 키패드 시 배경 fill ── */}
-        <div style={{
+        <div className="status-bar" style={{
           ...s.statusBar,
           background: keypadOpen ? '#222222' : 'transparent',
           transition: 'background 300ms ease-in-out',

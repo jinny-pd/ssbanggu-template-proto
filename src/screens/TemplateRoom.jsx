@@ -296,7 +296,7 @@ export default function TemplateRoom() {
       <div style={s.page}>
 
         {/* ── Status Bar ── */}
-        <div style={s.statusBar}>
+        <div className="status-bar" style={s.statusBar}>
           <div style={{ position: 'relative', width: 54, height: 50, flexShrink: 0 }}>
             <div style={{ position: 'absolute', top: '32%', bottom: '26%', left: 0, right: 0, borderRadius: 32 }}>
               <img src={img941} alt="" style={{ position: 'absolute', left: 12.45, top: 5.17, width: 28.426, height: 11.089 }} />

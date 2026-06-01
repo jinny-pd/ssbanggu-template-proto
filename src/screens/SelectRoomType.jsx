@@ -57,7 +57,7 @@ export default function SelectRoomType() {
         <img src={imgGrid} alt="" style={s.grid} />
 
         {/* Status Bar */}
-        <div style={s.statusBar}>
+        <div className="status-bar" style={s.statusBar}>
           <div style={s.sbTime}>
             <img src={img941} alt="" style={{ width: 28.43, height: 11.09 }} />
           </div>

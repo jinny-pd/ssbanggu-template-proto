@@ -152,7 +152,7 @@ export default function Home() {
       />
 
       {/* ── Status Bar ── */}
-      <div style={s.statusBar}>
+      <div className="status-bar" style={s.statusBar}>
         <div style={{ position: 'relative', width: 54, height: 50, flexShrink: 0 }}>
           <div style={{ position: 'absolute', top: '32%', bottom: '26%', left: 0, right: 0 }}>
             <img src={img941} alt="9:41"

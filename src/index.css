@@ -14,6 +14,10 @@ html, body, #root {
   height: 100%;
 }
 
+@media (max-width: 430px) {
+  .status-bar { height: 0 !important; overflow: hidden !important; }
+}
+
 body {
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
   background: #111;
