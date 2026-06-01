@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { HashRouter as BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Home from './screens/Home'
 import AddRoom from './screens/AddRoom'
@@ -8,20 +9,39 @@ import DesignBedroom from './screens/DesignBedroom'
 import OnboardingDone from './screens/OnboardingDone'
 import TemplateRoom from './screens/TemplateRoom'
 
+function useViewportScale() {
+  const [scale, setScale] = useState(() => window.innerHeight / 812)
+  useEffect(() => {
+    const update = () => setScale(window.innerHeight / 812)
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+  return scale
+}
+
 export default function App() {
+  const scale = useViewportScale()
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/add-room" element={<AddRoom />} />
-        <Route path="/create-room" element={<CreateRoom />} />
-        <Route path="/select-room-type" element={<SelectRoomType />} />
-        <Route path="/adjust-room" element={<AdjustRoom />} />
-        <Route path="/design-bedroom" element={<DesignBedroom />} />
-        <Route path="/onboarding-done" element={<OnboardingDone />} />
-        <Route path="/template-room" element={<TemplateRoom />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <div style={{
+      width: '100vw', height: '100dvh',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      overflow: 'hidden', background: '#111',
+    }}>
+      <div style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/add-room" element={<AddRoom />} />
+            <Route path="/create-room" element={<CreateRoom />} />
+            <Route path="/select-room-type" element={<SelectRoomType />} />
+            <Route path="/adjust-room" element={<AdjustRoom />} />
+            <Route path="/design-bedroom" element={<DesignBedroom />} />
+            <Route path="/onboarding-done" element={<OnboardingDone />} />
+            <Route path="/template-room" element={<TemplateRoom />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </div>
+    </div>
   )
 }
