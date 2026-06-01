@@ -6,7 +6,7 @@ export default function PhoneShell({ children, bg = '#222' }) {
       height: 812,
       background: bg,
       overflow: 'hidden',
-      borderRadius: 32,
+      borderRadius: 0,
       flexShrink: 0,
     }}>
       {children}
