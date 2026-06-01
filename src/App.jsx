@@ -28,7 +28,7 @@ export default function App() {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       overflow: 'hidden', background: '#111',
     }}>
-      <div style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
+      <div style={{ transform: `scale(${scale})`, transformOrigin: scale !== 1 ? 'top center' : 'center center' }}>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Home />} />
