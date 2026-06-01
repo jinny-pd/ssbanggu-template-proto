@@ -78,17 +78,7 @@ export default function AddRoom() {
           <div style={{ width: 24, flexShrink: 0 }} />
         </div>
 
-        {/* ── 배너 — pt:12 px:16 ── */}
-        <div style={s.bannerSection}>
-          <div style={s.banner}>
-            <span style={s.bannerTxt}>딱 맞는 방이 없으신가요?</span>
-            <button style={s.directBtn} onClick={() => navigate('/create-room')}>
-              직접 만들기
-            </button>
-          </div>
-        </div>
-
-        {/* ── 템플릿 섹션 — pt:8 pb:32 gap:8 ── */}
+        {/* ── 템플릿 섹션 — pt:20 pb:32 gap:8 ── */}
         <div style={s.templateSection}>
           {rows.map((row, ri) => (
             <div key={ri} style={s.row}>
@@ -123,7 +113,7 @@ const s = {
   /* 상태바 */
   statusBar: {
     height: 48, paddingTop: 18, flexShrink: 0,
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: 0,
   },
   sbLeft: {
     flex: '1 0 0', display: 'flex', alignItems: 'center',
@@ -157,35 +147,12 @@ const s = {
     textAlign: 'center', fontFamily: "'Pretendard', sans-serif",
   },
 
-  /* 배너 영역 — pt:12 px:16 */
-  bannerSection: {
-    flexShrink: 0, paddingTop: 12, paddingLeft: 16, paddingRight: 16,
-  },
-  banner: {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    border: '1px solid #e0e0e0', borderRadius: 12,
-    paddingTop: 16, paddingBottom: 16, paddingLeft: 20, paddingRight: 16,
-    background: 'white', overflow: 'hidden',
-  },
-  bannerTxt: {
-    fontSize: 14, fontWeight: 600, color: '#141414',
-    letterSpacing: '-0.3px', lineHeight: '20px',
-    fontFamily: "'Pretendard', sans-serif",
-  },
-  directBtn: {
-    flexShrink: 0, height: 32, padding: '0 12px',
-    border: '1px solid #00a1ff', borderRadius: 8,
-    background: 'white', color: '#00a1ff',
-    fontSize: 13, fontWeight: 600, letterSpacing: '-0.3px', lineHeight: '18px',
-    fontFamily: "'Pretendard', sans-serif", cursor: 'pointer',
-  },
-
   /* 템플릿 섹션 — pt:8 pb:32 gap:8 */
   templateSection: {
     flexShrink: 0,
     display: 'flex', flexDirection: 'column',
     alignItems: 'center', gap: 8,
-    paddingTop: 8, paddingBottom: 32,
+    paddingTop: 20, paddingBottom: 32,
     width: '100%',
   },
   row: {

@@ -200,7 +200,7 @@ const s = {
   statusBar: {
     position: 'absolute', top: 0, left: 0, width: 375, height: 50,
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    paddingLeft: 21, paddingRight: 14, boxSizing: 'border-box',
+    paddingLeft: 21, paddingRight: 14, boxSizing: 'border-box', opacity: 0,
   },
   sbTime: {
     width: 54, height: 50,

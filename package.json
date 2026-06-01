@@ -1,9 +1,9 @@
 {
-  "name": "ssbanggu-proto",
+  "name": "ssbanggu-template-proto",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 3002",
+    "dev": "vite --port 3003",
     "build": "vite build",
     "preview": "vite preview"
   },

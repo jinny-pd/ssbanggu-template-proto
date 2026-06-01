@@ -169,7 +169,11 @@ export default function Home() {
 
       {/* ── Top Bar ── */}
       <div style={s.topBar}>
-        <button style={s.backBtn}>
+        <button style={s.backBtn} onClick={() => {
+          localStorage.removeItem('ssOnboardingStep')
+          setStep(null)
+          setCardVisible(true)
+        }}>
           <img src={iconBackButton} alt="뒤로" style={{ width: 24, height: 24 }} />
         </button>
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
@@ -191,7 +195,7 @@ export default function Home() {
             } else if (step === 'template') {
               navigate('/template-room')
             } else if (step === 'area') {
-              navigate('/create-room', { state: { resume: 'auto-arrange' } })
+              navigate('/template-room', { state: { autoArrange: true } })
             } else {
               navigate('/create-room', { state: { resume: step } })
             }
@@ -202,7 +206,7 @@ export default function Home() {
             <div style={s.cardLeft}>
               <img src={STEP_IMG[step] ?? imgCardDefault} alt="" style={{ width: 36, height: 36, flexShrink: 0 }} />
               <div style={s.cardText}>
-                {(() => { const c = STEP_CARD[step] ?? { sub: '5분 만에 완성!', title: '내 방과 똑같이 만들어보기' }; return (<>
+                {(() => { const c = STEP_CARD[step] ?? { sub: '5분 만에 완성!', title: '템플릿으로 우리 집 만들어보기' }; return (<>
                   <span style={s.cardSub}>{c.sub}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <span style={s.cardTitle}>{c.title}</span>
@@ -323,17 +327,6 @@ export default function Home() {
       </div>
 
     </PhoneShell>
-    <button
-      style={{ ...s.resetBtn, ...(!step ? s.resetBtnDisabled : {}) }}
-      disabled={!step}
-      onClick={() => {
-        localStorage.removeItem('ssOnboardingStep')
-        setStep(null)
-        setCardVisible(true)
-      }}
-    >
-      온보딩 초기화
-    </button>
     </div>
   )
 }
@@ -343,7 +336,7 @@ const s = {
   statusBar: {
     position: 'absolute', top: 0, left: 0, width: 375, height: 50,
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    paddingLeft: 21, paddingRight: 14, overflow: 'hidden', zIndex: 10,
+    paddingLeft: 21, paddingRight: 14, overflow: 'hidden', zIndex: 10, opacity: 0,
   },
   topBar: {
     position: 'absolute', top: 50, left: 0, width: 375, height: 44,
@@ -386,17 +379,6 @@ const s = {
     background: 'none', border: 'none', cursor: 'pointer', padding: 0,
     width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
     flexShrink: 0,
-  },
-  resetBtn: {
-    position: 'absolute', top: 0, right: 475, zIndex: 5,
-    background: '#e0e0e0', borderRadius: 6, border: 'none', cursor: 'pointer',
-    paddingLeft: 8, paddingRight: 8, paddingTop: 4, paddingBottom: 4,
-    fontSize: 12, fontWeight: 600, color: '#141414',
-    letterSpacing: '-0.3px', lineHeight: '20px', fontFamily: 'inherit',
-    whiteSpace: 'nowrap',
-  },
-  resetBtnDisabled: {
-    background: '#383838', color: '#1E1E1E', cursor: 'default',
   },
   floatingRow: {
     position: 'absolute', top: 502, left: 0, right: 0,

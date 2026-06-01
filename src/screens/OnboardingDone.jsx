@@ -40,7 +40,7 @@ export default function OnboardingDone() {
 
         {/* ── Top Bar ── */}
         <div style={s.topBar}>
-          <button style={s.closeBtn} onClick={() => navigate(-1)}>
+          <button style={s.closeBtn} onClick={handleReset}>
             <img src={iconBackButton} alt="뒤로" style={{ width: 24, height: 24 }} />
           </button>
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
@@ -214,9 +214,6 @@ export default function OnboardingDone() {
 
       </div>
     </PhoneShell>
-    <button onClick={handleReset} style={s.resetBtn}>
-      온보딩 초기화
-    </button>
     </div>
   )
 }
@@ -243,7 +240,7 @@ const s = {
   statusBar: {
     position: 'absolute', left: 0, top: 0, width: 375, height: 50,
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    paddingLeft: 21, paddingRight: 14, overflow: 'hidden',
+    paddingLeft: 21, paddingRight: 14, overflow: 'hidden', opacity: 0,
   },
   sbTime:      { position: 'relative', width: 54, height: 50, flexShrink: 0 },
   sbTimeInner: { position: 'absolute', top: '32%', right: 0, bottom: '26%', left: 0, borderRadius: 32 },
@@ -276,17 +273,6 @@ const s = {
     width: '100%', height: '100%',
     objectFit: 'cover',
     pointerEvents: 'none',
-  },
-
-  /* 온보딩 초기화 버튼 */
-  resetBtn: {
-    position: 'absolute', top: 0, right: 475,
-    background: '#e0e0e0', border: 'none', borderRadius: 6,
-    padding: '4px 8px', cursor: 'pointer',
-    fontSize: 12, fontWeight: 600, color: '#141414',
-    letterSpacing: '-0.3px', lineHeight: '20px',
-    fontFamily: "'Pretendard', sans-serif",
-    whiteSpace: 'nowrap',
   },
 
   /* Component Area */

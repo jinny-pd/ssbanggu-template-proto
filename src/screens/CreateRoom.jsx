@@ -2372,7 +2372,7 @@ const s = {
   statusBar: {
     position: 'absolute', left: 0, top: 0, width: 375, height: 50,
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    paddingLeft: 21, paddingRight: 14, overflow: 'hidden',
+    paddingLeft: 21, paddingRight: 14, overflow: 'hidden', opacity: 0,
   },
   sbTime:      { position: 'relative', width: 54, height: 50, flexShrink: 0 },
   sbTimeInner: { position: 'absolute', top: '32%', right: 0, bottom: '26%', left: 0, borderRadius: 32 },

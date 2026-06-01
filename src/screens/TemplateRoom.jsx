@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useRef, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import PhoneShell from '../components/PhoneShell'
 
 import imgTemplateRoom  from '../assets/images/template-room-preview.png'
@@ -10,6 +10,9 @@ import imgAutoArrange2  from '../assets/images/자동배치_2.png'
 import imgAutoArrange3  from '../assets/images/자동배치_3.png'
 import iconArrowUpMedium  from '../assets/icons/[Icon] Arrow Up_Medium.svg'
 import iconArrowLeft       from '../assets/icons/[Icon] Arrow Left.svg'
+import iconBackButton      from '../assets/icons/[Icon] Back Button.svg'
+import iconPencil          from '../assets/icons/[Icon] Pencil.svg'
+import iconTrash           from '../assets/icons/[Icon] Trash.svg'
 import imgSpinnerBg        from '../assets/images/spinner-bg.svg'
 import imgSpinnerQ1        from '../assets/images/spinner-q1.svg'
 import imgSpinnerQ2        from '../assets/images/spinner-q2.svg'
@@ -18,12 +21,29 @@ import iconSpaceAICapture  from '../assets/icons/[Space AI] Icon Button_Capture.
 import iconSpaceAIRoomlist from '../assets/icons/[Space AI] Icon Button_Roomlist.svg'
 import iconSpaceAIMenu     from '../assets/icons/[Space AI] Icon Button_Menu.svg'
 
-// 침실 고정 영역: roomFrameInner(280×188) 기준 우상단 98×98
-const FIXED_ZONE = { x: 182, y: 0, w: 98, h: 98 }
+// 침실 고정 영역: roomFrameInner(280×188) 기준 우상단 98×150
+const FIXED_ZONE = { x: 182, y: 0, w: 98, h: 150 }
+
+// 사전 지정 영역 목록 (Figma node 15414:16716 기준)
+// 인접 영역 간 2px 간격 확보 (stroke 2px 겹침 방지)
+// 공유 경계: 현관↔주방(x=71→70/72), 거실↔주방(y=86→85/87), 거실·주방↔침실(x=182→181/183), 침실↔다용도실(y=150→149/151)
+const AREAS = [
+  { key: 'kitchen',  x: 72,  y: 87,  w: 109, h: 101, fill: 'rgba(255,123,40,0.4)',  stroke: '#ff7b28', label: '주방',     pillX: 100, pillY: 127, pillW: 52 },
+  { key: 'living',   x: 84,  y: 0,   w: 97,  h: 85,  fill: 'rgba(255,195,0,0.4)',   stroke: '#ffc300', label: '거실',     pillX: 108, pillY: 34,  pillW: 52 },
+  { key: 'bathroom', x: 24,  y: 0,   w: 56,  h: 83,  fill: 'rgba(253,61,74,0.4)',   stroke: '#fd3d4a', label: '욕실',     pillX: 26,  pillY: 32,  pillW: 52 },
+  { key: 'utility',  x: 228, y: 151, w: 52,  h: 37,  fill: 'rgba(200,0,255,0.4)',   stroke: '#c800ff', label: '다용도실', pillX: 216, pillY: 160, pillW: 76 },
+  { key: 'foyer',    x: 0,   y: 86,  w: 70,  h: 80,  fill: 'rgba(0,121,250,0.4)',   stroke: '#0079fa', label: '현관',     pillX: 10,  pillY: 117, pillW: 52 },
+  { key: 'bedroom',  x: 183, y: 0,   w: 97,  h: 149, fill: 'rgba(0,179,45,0.4)',    stroke: '#00b32d', label: '침실',     pillX: 206, pillY: 65,  pillW: 52 },
+]
 
 export default function TemplateRoom() {
   const navigate = useNavigate()
+  const location = useLocation()
 
+  const [activeArea,      setActiveArea]      = useState(null)
+  const [editingArea,     setEditingArea]     = useState(null)
+  const [zoneOnlyView,    setZoneOnlyView]    = useState(null)
+  const [editDragged,     setEditDragged]     = useState(false)
   const [areaDrawn,       setAreaDrawn]       = useState(false)
   const [areaEditing,     setAreaEditing]     = useState(false)
   const [areaDragPreview, setAreaDragPreview] = useState(null)
@@ -33,7 +53,7 @@ export default function TemplateRoom() {
   // 자동배치 바텀시트
   const [autoArrangeVisible, setAutoArrangeVisible] = useState(false)
   const [defaultRoomVisible, setDefaultRoomVisible] = useState(false)
-  const [rollingText,   setRollingText]   = useState('침실에 사용자님이 미리 배치한 가구와 소품을 확인하고 있어요.')
+  const [rollingText,   setRollingText]   = useState('더 나은 배치를 위해 가구가 조금 더 필요해요. 필요한 가구를 추천해 드릴게요.')
   const [rollingHidden, setRollingHidden] = useState(false)
   const [rollingFinal,  setRollingFinal]  = useState(false)
   const [apReady,       setApReady]       = useState(false)
@@ -60,6 +80,7 @@ export default function TemplateRoom() {
 
   const areaSvgRef           = useRef(null)
   const areaDragRef          = useRef({ active: false, moved: false, startX: 0, startY: 0 })
+  const editingAreaRef       = useRef(null)
   const areaSnackbarTimerRef = useRef(null)
   const sheetHeightRef       = useRef(320)
   const sheetDragStartYRef   = useRef(0)
@@ -71,46 +92,59 @@ export default function TemplateRoom() {
 
   const clearTimers = () => { timersRef.current.forEach(clearTimeout); timersRef.current = [] }
 
-  const getSvgPt = (e) => {
-    const rect = areaSvgRef.current?.getBoundingClientRect() ?? { left: 0, top: 0 }
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top }
-  }
-
-  const handleAreaDown = (e) => {
-    e.preventDefault()
-    e.currentTarget.setPointerCapture(e.pointerId)
-    const pt = getSvgPt(e)
-    areaDragRef.current = { active: true, moved: false, startX: pt.x, startY: pt.y }
-    setAreaDrawn(false)
-    setAreaEditing(false)
-    setAreaDragPreview({ x: pt.x, y: pt.y, w: 0, h: 0 })
-  }
-
-  const handleAreaMove = (e) => {
-    const d = areaDragRef.current
-    if (!d.active) return
-    const pt = getSvgPt(e)
-    const dx = pt.x - d.startX, dy = pt.y - d.startY
-    if (!d.moved && Math.hypot(dx, dy) > 5) d.moved = true
-    if (d.moved) {
-      setAreaDragPreview({
-        x: Math.min(d.startX, pt.x), y: Math.min(d.startY, pt.y),
-        w: Math.abs(dx), h: Math.abs(dy),
-      })
+  // 홈 'area' 스텝에서 진입 시 자동배치 화면 바로 표시
+  useEffect(() => {
+    if (location.state?.autoArrange) {
+      handleAreaNext()
     }
-  }
+  }, [])
 
-  const handleAreaUp = () => {
-    const d = areaDragRef.current
-    if (!d.active) return
-    d.active = false
-    setAreaDragPreview(null)
-    if (d.moved) {
-      setAreaSnapping(true)
-      requestAnimationFrame(() => requestAnimationFrame(() => setAreaSnapping(false)))
-      setAreaDrawn(true)
+  // editingAreaRef를 최신 editingArea와 동기화
+  useEffect(() => { editingAreaRef.current = editingArea }, [editingArea])
+
+  // 마우스/터치 공통 드래그 — { passive: false }로 직접 연결
+  useEffect(() => {
+    const svg = areaSvgRef.current
+    if (!svg) return
+    function svgPt(e) {
+      const r = svg.getBoundingClientRect()
+      return { x: e.clientX - r.left, y: e.clientY - r.top }
     }
-  }
+    function onDown(e) {
+      if (!editingAreaRef.current) return
+      e.preventDefault()
+      svg.setPointerCapture(e.pointerId)
+      const pt = svgPt(e)
+      areaDragRef.current = { active: true, moved: false, startX: pt.x, startY: pt.y }
+      setAreaDragPreview({ x: pt.x, y: pt.y, w: 0, h: 0 })
+    }
+    function onMove(e) {
+      const d = areaDragRef.current
+      if (!d.active) return
+      const pt = svgPt(e)
+      const dx = pt.x - d.startX, dy = pt.y - d.startY
+      if (!d.moved && Math.hypot(dx, dy) > 5) d.moved = true
+      if (d.moved) setAreaDragPreview({ x: Math.min(d.startX, pt.x), y: Math.min(d.startY, pt.y), w: Math.abs(dx), h: Math.abs(dy) })
+    }
+    function onUp() {
+      const d = areaDragRef.current
+      if (!d.active) return
+      const key = editingAreaRef.current
+      d.active = false
+      setAreaDragPreview(null)
+      if (key) { setActiveArea(key); setZoneOnlyView(key); setEditDragged(true) }
+    }
+    svg.addEventListener('pointerdown',   onDown, { passive: false })
+    svg.addEventListener('pointermove',   onMove, { passive: false })
+    svg.addEventListener('pointerup',     onUp)
+    svg.addEventListener('pointercancel', onUp)
+    return () => {
+      svg.removeEventListener('pointerdown',   onDown)
+      svg.removeEventListener('pointermove',   onMove)
+      svg.removeEventListener('pointerup',     onUp)
+      svg.removeEventListener('pointercancel', onUp)
+    }
+  }, [])
 
   const handleAreaEdit = () => {
     setAreaDrawn(false)
@@ -134,7 +168,7 @@ export default function TemplateRoom() {
     clearTimers()
     localStorage.setItem('ssOnboardingStep', 'area')
     setDefaultRoomVisible(true)
-    setRollingText('더 나은 배치를 위해 가구가 조금 더 필요해요. 필요한 가구를 추천해드릴게요.')
+    setRollingText('더 나은 배치를 위해 가구가 조금 더 필요해요. 필요한 가구를 추천해 드릴게요.')
     setRollingHidden(false)
     setRollingFinal(true)
     setApReady(false)
@@ -214,7 +248,7 @@ export default function TemplateRoom() {
           const tP3  = setTimeout(() => { setApAckText('러그를 깔고 소품들을 배치하고 있어요.'); setApAckBlink(false) }, 8320)
           const tB3  = setTimeout(() => setApAckBlink(true), 11000)
           const tFin = setTimeout(() => {
-            setApAckText('침실 영역에 배치가 완료되었어요. 최적의 배치 후보안을 확인해보세요.')
+            setApAckText('침실 배치가 완료되었어요. 최적의 배치 후보안을 확인해보세요.')
             setApAckColor('#141414')
             setApAckBlink(false)
             setApSpinner2(false)
@@ -277,7 +311,7 @@ export default function TemplateRoom() {
         {!defaultRoomVisible ? (
           <div style={s.topBar}>
             <div style={{ width: 24, flexShrink: 0 }} />
-            <p style={s.topBarTitle}>침실 영역 지정하기</p>
+            <p style={s.topBarTitle}>영역 편집하기</p>
             <button style={s.closeBtn} onClick={() => { localStorage.setItem('ssOnboardingStep', 'template'); navigate('/') }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <path d="M6 6l12 12M18 6L6 18" stroke="white" strokeWidth="1.6" strokeLinecap="round"/>
@@ -286,8 +320,8 @@ export default function TemplateRoom() {
           </div>
         ) : (
           <div style={{ ...s.topBar, justifyContent: 'space-between' }}>
-            <button style={s.closeBtn} onClick={() => navigate(-1)}>
-              <img src={iconArrowLeft} alt="뒤로" style={{ width: 24, height: 24 }} />
+            <button style={s.closeBtn} onClick={() => navigate('/')}>
+              <img src={iconBackButton} alt="뒤로" style={{ width: 24, height: 24 }} />
             </button>
             <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
               <img src={iconSpaceAIView}     alt="뷰 변경" style={{ width: 40, height: 42 }} />
@@ -303,41 +337,59 @@ export default function TemplateRoom() {
           <div style={s.tutorialInner}>
             {defaultRoomVisible ? (
               <>
-                <span style={s.tutorialStep}>Step 3. 가구 자동 배치 해보기</span>
-                <span style={s.tutorialTitle}>침실에 맞는 가구를 자동으로 배치해 드릴게요</span>
+                <span style={s.tutorialStep}>Step 2. 가구 자동 배치 해보기</span>
+                <span style={s.tutorialTitle}>비어있는 침실에 가구를 놓아볼까요?</span>
               </>
             ) : (
               <>
-                <span style={s.tutorialStep}>Step 2. 방 영역 지정하기</span>
-                <span style={s.tutorialTitle}>침실 영역을 지정해 보세요</span>
+                <span style={s.tutorialStep}>Step 1. 방 영역 편집하기</span>
+                <span style={s.tutorialTitle}>미리 지정된 영역을 터치해서 수정할 수 있어요</span>
               </>
             )}
           </div>
         </div>
 
         {/* ── Template Room Image (center) ── */}
-        <div style={{ ...s.roomFrame, opacity: defaultRoomVisible ? 0 : 1, transition: 'opacity 400ms ease-in-out' }}>
+        <div style={{ ...s.roomFrame, opacity: defaultRoomVisible ? 0 : 1, transition: 'opacity 400ms ease-in-out', overflow: 'visible' }}>
           <div style={s.roomFrameInner}>
             <img src={imgTemplateRoom} alt="템플릿 방" style={s.roomImg} />
             <svg
               ref={areaSvgRef}
               width={280} height={188}
               viewBox="0 0 280 188"
-              style={{ position: 'absolute', inset: 0, zIndex: 5, touchAction: 'none' }}
-              onPointerDown={handleAreaDown}
-              onPointerMove={handleAreaMove}
-              onPointerUp={handleAreaUp}
-              onPointerCancel={handleAreaUp}
+              style={{ position: 'absolute', inset: 0, zIndex: 5, pointerEvents: editingArea ? 'auto' : 'none', touchAction: 'none' }}
             >
+              {/* 사전 지정 영역들 — zone rect only */}
+              {AREAS.map(area => {
+                const isEditing = editingArea === area.key
+                return (
+                  <rect key={area.key}
+                    x={area.x} y={area.y} width={area.w} height={area.h} rx="4"
+                    fill={isEditing ? 'rgba(0,161,255,0.20)' : area.fill}
+                    stroke={isEditing ? '#00a1ff' : area.stroke}
+                    strokeWidth="2"
+                    strokeDasharray={isEditing ? '6 3' : undefined}
+                    opacity={
+                      (editingArea && editingArea !== area.key) ||
+                      (editingArea === area.key && areaDragPreview) ||
+                      (zoneOnlyView && zoneOnlyView !== area.key)
+                        ? 0 : 1
+                    }
+                    style={{ transition: 'opacity 150ms ease' }}
+                    pointerEvents="none"
+                  />
+                )
+              })}
               {/* 드래그 프리뷰 */}
               {areaDragPreview && areaDragPreview.w > 5 && areaDragPreview.h > 5 && (
                 <rect
                   x={areaDragPreview.x} y={areaDragPreview.y}
                   width={areaDragPreview.w} height={areaDragPreview.h}
                   rx="4"
-                  fill="#00A1FF" fillOpacity="0.2"
-                  stroke="#00A1FF" strokeWidth="2" strokeDasharray="6 6"
+                  fill="rgba(0,161,255,0.20)"
+                  stroke="#00a1ff" strokeWidth="2" strokeDasharray="6 3"
                   pointerEvents="none"
+                  style={{ transition: 'opacity 150ms ease' }}
                 />
               )}
               {/* 그린존 */}
@@ -364,87 +416,114 @@ export default function TemplateRoom() {
               )}
             </svg>
           </div>
+
+            {/* HTML Pill Badges */}
+            {AREAS.map(area => {
+              const isActive = activeArea === area.key
+              const iconFill  = isActive ? 'white'   : '#8c8c8c'
+              const checkColor = isActive ? '#141414' : 'white'
+              const textColor  = isActive ? 'white'   : '#8c8c8c'
+              return (
+                <div
+                  key={area.key}
+                  onClick={() => { setEditingArea(null); setZoneOnlyView(null); setActiveArea(isActive ? null : area.key) }}
+                  style={{
+                    position: 'absolute',
+                    left: area.x + area.w / 2, top: area.pillY,
+                    transform: 'translateX(-50%)',
+                    display: 'inline-flex',
+                    minHeight: 20, maxHeight: 20,
+                    padding: '0 8px',
+                    justifyContent: 'center', alignItems: 'center',
+                    gap: 2,
+                    borderRadius: 15,
+                    background: isActive ? '#141414' : 'white',
+                    cursor: 'pointer', zIndex: 10,
+                    opacity: (editingArea || (zoneOnlyView && zoneOnlyView !== area.key)) ? 0 : 1,
+                    transition: 'background 150ms ease, opacity 200ms ease',
+                    whiteSpace: 'nowrap',
+                    pointerEvents: (editingArea || (zoneOnlyView && zoneOnlyView !== area.key)) ? 'none' : 'auto',
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0 }}>
+                    <circle cx="6" cy="6" r="5.5" fill={iconFill} />
+                    <path d="M3.5 6.1L5.1 7.7L8.5 4.5" stroke={checkColor} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span style={{
+                    fontSize: 11, fontWeight: 600,
+                    color: textColor,
+                    letterSpacing: '-0.3px', lineHeight: '16px',
+                    fontFamily: "'Pretendard', sans-serif",
+                  }}>
+                    {area.label}
+                  </span>
+                </div>
+              )
+            })}
         </div>
 
         {/* ── 가이드 텍스트 ── */}
         <div style={{
           ...s.guideText,
-          opacity: defaultRoomVisible ? 0 : (areaDrawn || areaDragPreview || areaSnackbar) ? 0 : 1,
-          transition: 'opacity 300ms ease-in-out',
+          opacity: editingArea && !editDragged && !areaDragPreview ? 1 : 0,
+          transition: 'opacity 200ms ease',
           pointerEvents: 'none',
         }}>
-          <p style={s.guideTextLabel}>드래그하여 침실 영역을 지정해주세요.</p>
+          <p style={s.guideTextLabel}>
+            드래그하여 {AREAS.find(a => a.key === editingArea)?.label ?? '침실'} 영역을 지정해주세요.
+          </p>
         </div>
 
-        {/* ── 수정하기 / 삭제하기 ── */}
-        {(areaDrawn || areaEditing) && !areaDragPreview && !areaSnackbar && !defaultRoomVisible && (
+        {/* ── 수정하기 / 삭제하기 (영역 활성화 시 노출) ── */}
+        {activeArea && !defaultRoomVisible && (
           <div style={{
-            position: 'absolute', left: 0, bottom: 74, width: 375, height: 42, zIndex: 20,
+            position: 'absolute', bottom: 82, left: 0, right: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: 40, zIndex: 20,
           }}>
-            <svg width="375" height="42" viewBox="0 0 375 42" fill="none" style={{ display: 'block', width: '100%', height: '100%' }}>
-              <defs>
-                <mask id="areaMask0" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="138" y="2" width="19" height="20">
-                  <path fillRule="evenodd" clipRule="evenodd" d="M150.777 3.70248C152.066 2.41375 154.155 2.41376 155.444 3.70248L155.798 4.05605C157.086 5.34478 157.086 7.43422 155.798 8.72294L143.729 20.7917C143.487 21.0339 143.158 21.1707 142.816 21.1724L139.619 21.188C138.907 21.1914 138.327 20.6228 138.313 19.9156L138.312 19.8818L138.328 16.6843C138.329 16.3417 138.466 16.0135 138.708 15.7712L150.777 3.70248ZM139.927 16.8153L139.914 19.5866L142.685 19.5731L152.392 9.86586L149.634 7.10815L139.927 16.8153ZM154.313 4.83383C153.649 4.16995 152.572 4.16996 151.908 4.83383L150.766 5.9768L153.523 8.73451L154.666 7.59159C155.33 6.92771 155.33 5.85129 154.666 5.18739L154.313 4.83383Z" fill="black"/>
-                </mask>
-                <mask id="areaMask1" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="217" y="2" width="21" height="20">
-                  <path d="M225.3 10.25C225.742 10.25 226.1 10.6082 226.1 11.05V16.35L226.1 16.3707C226.089 16.8029 225.735 17.15 225.3 17.15C224.865 17.15 224.512 16.8029 224.501 16.3707L224.5 16.35V11.05C224.5 10.6082 224.859 10.25 225.3 10.25Z" fill="black"/>
-                  <path d="M229.75 10.25C230.192 10.25 230.55 10.6082 230.55 11.05V16.35L230.55 16.3707C230.539 16.8029 230.185 17.15 229.75 17.15C229.315 17.15 228.962 16.8029 228.951 16.3707L228.95 16.35V11.05C228.95 10.6082 229.309 10.25 229.75 10.25Z" fill="black"/>
-                  <path fillRule="evenodd" clipRule="evenodd" d="M236.321 5.40024C236.753 5.4112 237.1 5.76508 237.1 6.2C237.1 6.63492 236.753 6.9888 236.321 6.99975L236.3 7H235.55V17.6198C235.55 18.9485 235.247 20.0886 234.45 20.8859C233.653 21.6833 232.512 21.9864 231.184 21.9864H223.817C222.488 21.9864 221.348 21.6833 220.551 20.8859C219.754 20.0886 219.45 18.9485 219.45 17.6198V7H218.7C218.259 7 217.9 6.64183 217.9 6.2C217.9 5.75817 218.259 5.4 218.7 5.4H236.3L236.321 5.40024ZM221.05 17.6198C221.05 18.7369 221.308 19.3801 221.682 19.7546C222.057 20.1291 222.7 20.3864 223.817 20.3864H231.184C232.301 20.3864 232.944 20.1291 233.319 19.7546C233.693 19.3801 233.95 18.7369 233.95 17.6198V7H221.05V17.6198Z" fill="black"/>
-                  <path d="M229.75 2.35C230.192 2.35 230.55 2.70817 230.55 3.15C230.55 3.59183 230.192 3.95 229.75 3.95H225.25C224.809 3.95 224.45 3.59183 224.45 3.15C224.45 2.70817 224.809 2.35 225.25 2.35H229.75Z" fill="black"/>
-                </mask>
-              </defs>
-              <g mask="url(#areaMask0)"><rect x="135.5" width="24" height="24" fill="white"/></g>
-              <path d="M132.973 29.4219C132.962 30.8164 134.673 32.1289 136.735 32.3984L136.302 33.3125C134.585 33.0371 133.073 32.1465 132.399 30.9102C131.708 32.1523 130.202 33.0371 128.497 33.3125L128.052 32.3984C130.114 32.1289 131.802 30.8281 131.813 29.4219V28.8477H132.973V29.4219ZM137.169 34.3438V35.2578H132.903V38.9961H131.813V35.2578H127.595V34.3438H137.169ZM146.42 28.4961V34.7422H145.306V32.082H143.349V31.168H145.306V28.4961H146.42ZM142.904 35.0352C145.107 35.0352 146.455 35.7617 146.455 37.0156C146.455 38.2695 145.107 38.9844 142.904 38.9961C140.701 38.9844 139.341 38.2695 139.353 37.0156C139.341 35.7617 140.701 35.0352 142.904 35.0352ZM142.904 35.9023C141.369 35.9023 140.455 36.3008 140.455 37.0156C140.455 37.7188 141.369 38.1289 142.904 38.1172C144.439 38.1289 145.353 37.7188 145.353 37.0156C145.353 36.3008 144.439 35.9023 142.904 35.9023ZM141.427 30.3477C141.427 31.6836 142.377 32.9727 143.959 33.5117L143.384 34.3906C142.207 33.9805 141.339 33.1426 140.888 32.1055C140.425 33.2832 139.505 34.2266 138.252 34.6836L137.666 33.793C139.295 33.2305 140.291 31.8125 140.291 30.3594V30.125H138.017V29.2227H143.677V30.125H141.427V30.3477ZM155.916 28.4961V32.75H157.604V33.6758H155.916V38.9961H154.815V28.4961H155.916ZM153.901 30.1367V31.0508H147.678V30.1367H150.268V28.6367H151.381V30.1367H153.901ZM150.83 31.8242C152.33 31.8242 153.432 32.832 153.444 34.2617C153.432 35.7031 152.33 36.6992 150.83 36.7109C149.319 36.6992 148.217 35.7031 148.217 34.2617C148.217 32.832 149.319 31.8242 150.83 31.8242ZM150.83 32.7383C149.94 32.7383 149.272 33.3594 149.284 34.2617C149.272 35.1758 149.94 35.7852 150.83 35.7734C151.721 35.7852 152.377 35.1758 152.377 34.2617C152.377 33.3594 151.721 32.7383 150.83 32.7383ZM166.538 28.4961V38.9961H165.413V28.4961H166.538ZM163.409 29.6211C163.409 32.6914 162.097 35.3633 158.499 37.0859L157.913 36.1836C160.708 34.8535 162.068 32.9609 162.284 30.5117H158.417V29.6211H163.409Z" fill="#8C8C8C"/>
-              <g mask="url(#areaMask1)"><rect x="215.5" width="24" height="24" fill="white"/></g>
-              <path d="M211.239 30.1719C211.239 31.543 212.2 32.8203 213.794 33.3477L213.22 34.2148C212.036 33.8223 211.163 32.9844 210.712 31.9297C210.249 33.084 209.352 33.9688 208.11 34.4023L207.536 33.5234C209.188 32.9609 210.138 31.6016 210.138 30.0781V29.0352H211.239V30.1719ZM215.845 28.4961V31.2031H217.368V32.1406H215.845V34.8594H214.731V28.4961H215.845ZM215.845 35.3398V38.9961H214.731V36.2422H208.907V35.3398H215.845ZM226.677 28.4961V38.9961H225.611V28.4961H226.677ZM224.545 28.7188V38.4688H223.49V33.125H221.861V32.2109H223.49V28.7188H224.545ZM220.83 31.4258C220.83 33.2188 221.556 35.0117 223.033 35.8672L222.365 36.6875C221.363 36.0898 220.671 35.0293 220.314 33.7578C219.933 35.1289 219.218 36.2949 218.193 36.9336L217.513 36.1016C219.002 35.1992 219.763 33.2891 219.763 31.4258V30.582H217.83V29.6797H222.634V30.582H220.83V31.4258ZM235.916 28.4961V32.75H237.604V33.6758H235.916V38.9961H234.815V28.4961H235.916ZM233.901 30.1367V31.0508H227.678V30.1367H230.268V28.6367H231.381V30.1367H233.901ZM230.83 31.8242C232.33 31.8242 233.432 32.832 233.444 34.2617C233.432 35.7031 232.33 36.6992 230.83 36.7109C229.319 36.6992 228.217 35.7031 228.217 34.2617C228.217 32.832 229.319 31.8242 230.83 31.8242ZM230.83 32.7383C229.94 32.7383 229.272 33.3594 229.284 34.2617C229.272 35.1758 229.94 35.7852 230.83 35.7734C231.721 35.7852 232.377 35.1758 232.377 34.2617C232.377 33.3594 231.721 32.7383 230.83 32.7383ZM246.538 28.4961V38.9961H245.413V28.4961H246.538ZM243.409 29.6211C243.409 32.6914 242.097 35.3633 238.499 37.0859L237.913 36.1836C240.708 34.8535 242.068 32.9609 242.284 30.5117H238.417V29.6211H243.409Z" fill="#8C8C8C"/>
-            </svg>
             <button
-              style={{ position: 'absolute', top: 0, left: 128, width: 40, height: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-              onClick={handleAreaEdit}
-              aria-label="수정하기"
-            />
+              onClick={() => { setEditingArea(activeArea); setActiveArea(null); setEditDragged(false) }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, width: 40, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+            >
+              <img src={iconPencil} alt="수정" style={{ width: 24, height: 24, filter: 'brightness(0) invert(1)' }} />
+              <span style={{ fontSize: 12, fontWeight: 500, color: '#8c8c8c', letterSpacing: '-0.3px', lineHeight: '16px', fontFamily: "'Pretendard', sans-serif", whiteSpace: 'nowrap' }}>수정하기</span>
+            </button>
             <button
-              style={{ position: 'absolute', top: 0, left: 208, width: 40, height: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-              onClick={handleAreaDelete}
-              aria-label="삭제하기"
-            />
+              onClick={() => setActiveArea(null)}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, width: 40, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+            >
+              <img src={iconTrash} alt="삭제" style={{ width: 24, height: 24, filter: 'brightness(0) invert(1)' }} />
+              <span style={{ fontSize: 12, fontWeight: 500, color: '#8c8c8c', letterSpacing: '-0.3px', lineHeight: '16px', fontFamily: "'Pretendard', sans-serif", whiteSpace: 'nowrap' }}>삭제하기</span>
+            </button>
           </div>
         )}
 
-        {/* ── 이전 / 다음 ── */}
+        {/* ── 이대로 사용 ── */}
         <div style={{
           position: 'absolute', left: 0, bottom: 0, width: 375,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 8, paddingLeft: 16, paddingRight: 16,
+          paddingLeft: 16, paddingRight: 16,
           paddingTop: 10, paddingBottom: 16,
           opacity: apPlacementClosing ? 0 : 1,
-          pointerEvents: apPlacementClosing ? 'none' : 'auto',
+          pointerEvents: (apPlacementClosing || (editingArea && !editDragged) || areaDragPreview) ? 'none' : 'auto',
+          transform: (editingArea && !editDragged) || areaDragPreview ? 'translateY(100%)' : 'translateY(0)',
+          transition: 'transform 300ms cubic-bezier(0.32,0.72,0,1)',
           zIndex: 20,
         }}>
-          <button style={{
-            minWidth: 88, padding: '8px',
-            background: 'none', border: 'none', cursor: 'pointer',
-            fontFamily: "'Pretendard', sans-serif",
-            fontSize: 16, fontWeight: 500, color: 'white',
-            letterSpacing: '-0.3px', lineHeight: '20px',
-          }} onClick={() => navigate(-1)}>
-            이전
-          </button>
           <button
-            disabled={!areaDrawn}
-            onClick={areaDrawn ? handleAreaNext : undefined}
+            onClick={activeArea
+              ? () => { setActiveArea(null); setZoneOnlyView(null); setEditingArea(null); setEditDragged(false) }
+              : handleAreaNext
+            }
             style={{
-              flex: 1, height: 48,
-              background: areaDrawn ? '#00a1ff' : 'rgba(255,255,255,0.15)',
-              color: areaDrawn ? 'white' : 'rgba(255,255,255,0.35)',
+              width: '100%', height: 48,
+              background: '#00a1ff', color: 'white',
               border: 'none', borderRadius: 8,
               fontFamily: "'Pretendard', sans-serif",
               fontSize: 16, fontWeight: 600, letterSpacing: '-0.3px',
-              cursor: areaDrawn ? 'pointer' : 'default',
-              transition: 'background 200ms ease, color 200ms ease',
+              cursor: 'pointer',
             }}
           >
-            다음
+            {activeArea ? '적용하기' : '이대로 사용하기'}
           </button>
         </div>
 
@@ -810,7 +889,7 @@ const s = {
   statusBar: {
     position: 'absolute', top: 0, left: 0, width: 375, height: 50,
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    paddingLeft: 21, paddingRight: 14, zIndex: 10,
+    paddingLeft: 21, paddingRight: 14, zIndex: 10, opacity: 0,
   },
 
   topBar: {
@@ -853,7 +932,6 @@ const s = {
     fontSize: 16, fontWeight: 600, color: '#e0e0e0',
     lineHeight: '28px', letterSpacing: '-0.3px',
     fontFamily: "'Pretendard', sans-serif",
-    whiteSpace: 'nowrap',
   },
 
   roomFrame: {
@@ -882,7 +960,7 @@ const s = {
   },
 
   guideText: {
-    position: 'absolute', bottom: 82, left: '50%',
+    position: 'absolute', bottom: 20, left: '50%',
     transform: 'translateX(-50%)',
     backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
     background: 'rgba(255,255,255,0.12)',
