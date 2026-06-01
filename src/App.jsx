@@ -10,9 +10,10 @@ import OnboardingDone from './screens/OnboardingDone'
 import TemplateRoom from './screens/TemplateRoom'
 
 function useViewportScale() {
-  const [scale, setScale] = useState(() => window.innerHeight / 812)
+  const calc = () => window.innerWidth <= 430 ? window.innerHeight / 812 : 1
+  const [scale, setScale] = useState(calc)
   useEffect(() => {
-    const update = () => setScale(window.innerHeight / 812)
+    const update = () => setScale(calc())
     window.addEventListener('resize', update)
     return () => window.removeEventListener('resize', update)
   }, [])
