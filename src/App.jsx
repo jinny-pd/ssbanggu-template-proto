@@ -10,7 +10,10 @@ import OnboardingDone from './screens/OnboardingDone'
 import TemplateRoom from './screens/TemplateRoom'
 
 function useViewportScale() {
-  const calc = () => window.innerWidth <= 430 ? window.innerHeight / 812 : 1
+  const calc = () => {
+    if (window.innerWidth > 430) return 1
+    return Math.max(window.innerWidth / 375, window.innerHeight / 812)
+  }
   const [scale, setScale] = useState(calc)
   useEffect(() => {
     const update = () => setScale(calc())
