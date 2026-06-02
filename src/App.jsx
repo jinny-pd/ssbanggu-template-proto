@@ -31,24 +31,12 @@ function AppShell({ scale }) {
   const isLight = LIGHT_ROUTES.has(location.pathname)
   const bg = scale !== 1 ? (isLight ? '#ffffff' : '#111111') : '#111111'
 
-  // phone-inner top/bottom 오프셋 계산
+  // phone-inner bottom 오프셋: 스케일된 콘텐츠가 뷰포트 초과하는 만큼 보정
   useEffect(() => {
     if (scale === 1) {
-      document.documentElement.style.removeProperty('--phone-inner-top')
       document.documentElement.style.removeProperty('--phone-inner-bottom')
       return
     }
-    // env(safe-area-inset-top)를 JS로 직접 측정
-    const el = document.createElement('div')
-    el.style.cssText = 'position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top,0px);pointer-events:none;opacity:0'
-    document.body.appendChild(el)
-    const sat = el.getBoundingClientRect().height
-    document.body.removeChild(el)
-
-    // topBar(y=50)가 상태바(sat) 바로 아래에 오도록
-    const phoneInnerTop = sat - 50
-    document.documentElement.style.setProperty('--phone-inner-top', `${phoneInnerTop}px`)
-
     const overflow = Math.max(0, 812 - window.innerHeight / scale)
     document.documentElement.style.setProperty('--phone-inner-bottom', `${overflow}px`)
   }, [scale])
@@ -57,13 +45,10 @@ function AppShell({ scale }) {
   useEffect(() => {
     if (scale === 1) return
     const color = isLight ? '#ffffff' : '#222222'
-    const statusStyle = isLight ? 'default' : 'black-translucent'
     document.body.style.background = color
     document.documentElement.style.background = color
     const themeTag = document.querySelector('meta[name="theme-color"]')
-    const statusTag = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
     if (themeTag) themeTag.setAttribute('content', color)
-    if (statusTag) statusTag.setAttribute('content', statusStyle)
   }, [location.pathname, scale, isLight])
 
   return (
