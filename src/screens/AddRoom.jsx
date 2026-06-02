@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import PhoneShell from '../components/PhoneShell'
 import iconArrowLeftMedium from '../assets/icons/[Icon] Arrow Left_Medium.svg'
 import imgBasic    from '../assets/images/기본.png'
@@ -51,6 +52,16 @@ function RoomCard({ name, img, imgW, imgH, onUse }) {
 export default function AddRoom() {
   const navigate = useNavigate()
   const rows = [TEMPLATES.slice(0, 2), TEMPLATES.slice(2, 4), TEMPLATES.slice(4, 6)]
+
+  useEffect(() => {
+    const prev = document.body.style.background
+    document.body.style.background = '#ffffff'
+    document.documentElement.style.background = '#ffffff'
+    return () => {
+      document.body.style.background = prev
+      document.documentElement.style.background = ''
+    }
+  }, [])
 
   return (
     <PhoneShell bg="white">

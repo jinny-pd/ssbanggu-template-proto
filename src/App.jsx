@@ -23,13 +23,13 @@ function useViewportScale() {
   return scale
 }
 
-const ROUTE_BG = {
-  '/add-room': '#ffffff',
-}
+// 밝은 배경 라우트 (기본 theme-color #fff와 일치)
+const LIGHT_ROUTES = new Set(['/add-room'])
 
 function AppShell({ scale }) {
   const location = useLocation()
-  const bg = scale !== 1 ? (ROUTE_BG[location.pathname] ?? '#111111') : '#111111'
+  const isLight = LIGHT_ROUTES.has(location.pathname)
+  const bg = scale !== 1 ? (isLight ? '#ffffff' : '#111111') : '#111111'
 
   // phone-inner bottom 오프셋: 스케일된 콘텐츠가 뷰포트 초과하는 만큼 보정
   useEffect(() => {
@@ -41,17 +41,18 @@ function AppShell({ scale }) {
     document.documentElement.style.setProperty('--phone-inner-bottom', `${overflow}px`)
   }, [scale])
 
-  // 라우트별 배경색 + meta 태그 동기화
+  // 라우트별 theme-color + body 배경 동기화 (기본 white, 어두운 화면에서 dark로 변경)
   useEffect(() => {
     if (scale === 1) return
-    const color = ROUTE_BG[location.pathname] ?? '#222222'
+    const color = isLight ? '#ffffff' : '#222222'
+    const statusStyle = isLight ? 'default' : 'black-translucent'
     document.body.style.background = color
     document.documentElement.style.background = color
     const themeTag = document.querySelector('meta[name="theme-color"]')
     const statusTag = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
     if (themeTag) themeTag.setAttribute('content', color)
-    if (statusTag) statusTag.setAttribute('content', color === '#ffffff' ? 'default' : 'black-translucent')
-  }, [location.pathname, scale])
+    if (statusTag) statusTag.setAttribute('content', statusStyle)
+  }, [location.pathname, scale, isLight])
 
   return (
     <div style={{
@@ -65,7 +66,7 @@ function AppShell({ scale }) {
       {scale !== 1 && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0,
-          height: 'env(safe-area-inset-top)',
+          height: 'env(safe-area-inset-top, 60px)',
           background: bg,
           zIndex: 9999,
           pointerEvents: 'none',
