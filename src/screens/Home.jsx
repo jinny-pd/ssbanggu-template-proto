@@ -197,7 +197,7 @@ export default function Home() {
             } else if (step === 'area') {
               navigate('/template-room', { state: { autoArrange: true } })
             } else {
-              navigate('/create-room', { state: { resume: step } })
+              navigate('/add-room')
             }
           }}
           style={s.card}
