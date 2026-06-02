@@ -49,6 +49,8 @@ function AppShell({ scale }) {
     document.documentElement.style.background = color
     const themeTag = document.querySelector('meta[name="theme-color"]')
     if (themeTag) themeTag.setAttribute('content', color)
+    const colorSchemeTag = document.querySelector('meta[name="color-scheme"]')
+    if (colorSchemeTag) colorSchemeTag.setAttribute('content', isLight ? 'light' : 'dark')
   }, [location.pathname, scale, isLight])
 
   return (
